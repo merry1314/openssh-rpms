@@ -126,6 +126,6 @@ When built with `WITH_OPENSSL=0`, `ssh-rsa` keys are not supported. But the RPMs
 UOS's `openssh-help` subpackage has files that confilict with the package. It's must be removed before installing the compiled RPMs:
 
 ```bash
-rpm --nodeps -e openssh-help
+sudo rpm --nodeps -e openssh-help
 sudo yum --disablerepo=* install -y ./openssh*.rpm
 ```
