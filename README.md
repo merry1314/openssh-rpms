@@ -15,11 +15,17 @@ Similar Project: [Backport OpenSSH for Debian / Ubuntu distros](https://github.c
 
 ## Project Structure 
 
-- `el5`: Designed for legacy environments. It requires independent compilation of toolchains (e.g., Perl) to support the build process.
-- `el6`: Utilizes traditional SysVinit scripts for service startup.
-- `el7`: Adopts modern Systemd unit files for service management.
+- `pullsrc.sh`: Script to download source packages.
+- `compile.sh`: Script to build RPMs.
+- `version.env`: config file for variables (versions, release number, OPENSSL MODE, proxy ...)
 
-**Note**: The directory names (`el5`, `el6`, `el7`) serve as functional templates for different environment types. For instance, the Systemd units in `el7` are applicable not only to EL7 but also to EL8, EL9, and other modern distributions that rely on Systemd.
+The directory (`el5`, `el6`, `el7`) serve as functional templates for different environment types. The `openssh.spec` are modified based on the shipped spec file from OpenSSH project.
+
+- `el5`: Designed for legacy environments. With toolchains (Perl) to support the build process.
+- `el6`: With SysVinit startup.
+- `el7`: With Systemd service.
+
+**Note**: the Systemd units in `el7` are applicable not only to EL7 but also to EL8, EL9, and other modern distributions that rely on Systemd.
 
 ## Current Version:
 
@@ -47,7 +53,7 @@ yum install -y gcc44
 
 ### Build RPMs
 
-Note: It is not necessary to build on every system that needs the latest version of OpenSSH, as most RPM-based Linux distributions are glibc compatible with each other. That is, RPMs built on CentOS can be installed and run on Rocky Linux 8/AlmaLinux/Oracle Linux 8, etc.
+Note: It is unnecessary to build on each system, as most RPM-based Linux distributions are glibc compatible. That is, RPMs built on `CentOS 8` can be installed and run on `Rocky Linux 8`/`AlmaLinux 8`/`Oracle Linux 8`, etc.
 
 1. Install build requirements listed above.
 2. Edit `version.env` file if necessary.
@@ -76,9 +82,6 @@ ls
 
 # Install rpm packages.
 sudo yum --disablerepo=* localinstall -y ./openssh*.rpm
-
-# In case host key file permissions are too open.
-chmod -v 600 /etc/ssh/ssh_host_*_key
 
 # Check Installed version:
 ssh -V && /usr/sbin/sshd -V
@@ -112,17 +115,17 @@ rpm -ivh --force --nodeps --replacepkgs --replacefiles openssh-*.rpm
 
 For more details, see [docker/README.md](docker/README.md)
 
-## Security Notes
+## Other Notes
 
-This package provide following options in `/etc/ssh/sshd_config` to work like triditional sshd.
+### Built without OPENSSL
 
-Note: when built with `WITH_OPENSSL=0`, `ssh-rsa` is not supported.
+When built with `WITH_OPENSSL=0`, `ssh-rsa` keys are not supported. But the RPMs are much smaller, and the built process is much faster.
 
-```
-PubkeyAcceptedAlgorithms +ssh-rsa
-PermitRootLogin yes
-PasswordAuthentication yes
-UseDNS no
-UsePAM yes
-KexAlgorithms -diffie-hellman-group1-sha1,diffie-hellman-group1-sha256,diffie-hellman-group14-sha1,diffie-hellman-group14-sha256,diffie-hellman-group15-sha256,diffie-hellman-group15-sha512,diffie-hellman-group16-sha256,diffie-hellman-group16-sha512,diffie-hellman-group17-sha512,diffie-hellman-group18-sha512,diffie-hellman-group-exchange-sha1,diffie-hellman-group-exchange-sha256,diffie-hellman-group-exchange-sha512
+### Install on uniontech UOS 20
+
+UOS's `openssh-help` subpackage has files that confilict with the package. It's must be removed before installing the compiled RPMs:
+
+```bash
+rpm --nodeps -e openssh-help
+sudo yum --disablerepo=* install -y ./openssh*.rpm
 ```
